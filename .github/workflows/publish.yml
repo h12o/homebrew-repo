@@ -8,12 +8,13 @@ on:
 jobs:
   pr-pull:
     if: contains(github.event.pull_request.labels.*.name, 'pr-pull')
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     permissions:
       actions: read
       checks: read
       contents: write
       issues: read
+      packages: write
       pull-requests: write
     steps:
       - name: Set up Homebrew
@@ -24,11 +25,25 @@ jobs:
       - name: Set up git
         uses: Homebrew/actions/git-user-config@main
 
-      - name: Pull bottles
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Pull and publish bottles to GHCR
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_GITHUB_PACKAGES_USER: ${{ github.repository_owner }}
+          HOMEBREW_GITHUB_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PULL_REQUEST: ${{ github.event.pull_request.number }}
-        run: brew pr-pull --debug --tap="$GITHUB_REPOSITORY" "$PULL_REQUEST"
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          GHCR_REPO="https://ghcr.io/v2/${OWNER}/${REPO#homebrew-}"
+          brew pr-pull --debug --publish --root-url="${GHCR_REPO}" --tap="${GITHUB_REPOSITORY}" "${PULL_REQUEST}"
 
       - name: Push commits
         uses: Homebrew/actions/git-try-push@main
@@ -39,4 +54,4 @@ jobs:
         if: github.event.pull_request.head.repo.fork == false
         env:
           BRANCH: ${{ github.event.pull_request.head.ref }}
-        run: git push --delete origin "$BRANCH"
+        run: git push --delete origin "${BRANCH}"
