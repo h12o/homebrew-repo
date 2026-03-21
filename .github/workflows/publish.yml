@@ -43,7 +43,7 @@ jobs:
           REPO: ${{ github.event.repository.name }}
         run: |
           GHCR_REPO="https://ghcr.io/v2/${OWNER}/${REPO#homebrew-}"
-          brew pr-pull --debug --publish --root-url="${GHCR_REPO}" --tap="${GITHUB_REPOSITORY}" "${PULL_REQUEST}"
+          brew pr-pull --debug --root-url="${GHCR_REPO}" --tap="${GITHUB_REPOSITORY}" "${PULL_REQUEST}"
 
       - name: Push commits
         uses: Homebrew/actions/git-try-push@main
