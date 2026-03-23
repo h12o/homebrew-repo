@@ -1,4 +1,4 @@
-# H12o Repo
+# Hidetomo Hosono (h12o)'s Homebrew Repo
 
 ## How do I install these formulae?
 
